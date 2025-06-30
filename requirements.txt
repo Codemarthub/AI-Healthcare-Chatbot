@@ -1,0 +1,6 @@
+streamlit
+scikit-learn
+pandas
+nltk
+deep_translator
+cryptography
