@@ -10,6 +10,7 @@ from deep_translator import GoogleTranslator
 from cryptography.fernet import Fernet
 import streamlit as st
 import nltk
+import os
 
 # Download necessary nltk resources
 nltk.download('punkt')
@@ -57,38 +58,52 @@ def translate_input(user_input, src_lang='auto', target_lang='en'):
     except:
         return user_input
 
-# Streamlit Chatbot UI
+# Streamlit chatbot UI
 def run_chatbot():
-    st.set_page_config(page_title="AI Healthcare Chatbot", page_icon="🩺")
-    st.title("AI-Powered Healthcare Chatbot 🩺")
-    st.write("Preliminary health advice based on your symptoms. For educational use only.")
+    st.set_page_config(page_title="AVECARE AI Health Chatbot", page_icon="🩺", layout="centered")
 
-    consent = st.checkbox("I understand this AI does not replace a doctor.")
+    # Display logo image — make sure 'avecare_logo.png' is in your repo folder
+    st.image("avecare_logo.png", width=180)
+
+    # Title and description
+    st.markdown("<h1 style='text-align: center; color: #01579B;'>AVECARE AI Healthcare Chatbot</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>Get AI-powered preliminary health advice based on your symptoms.</p>", unsafe_allow_html=True)
+    st.write("---")
+
+    # Consent agreement
+    consent = st.checkbox("I agree and understand this AI chatbot is for informational advice only and does not replace a medical doctor.")
     if not consent:
-        st.warning("Please provide consent to continue.")
+        st.warning("Please check the consent box to proceed.")
         st.stop()
 
-    user_input = st.text_area("Describe your symptoms (separate with commas):")
+    st.markdown("#### Describe your symptoms (separate them with commas):")
+    user_input = st.text_area("", placeholder="Example: fever, headache, cough")
 
-    if st.button("Get Diagnosis"):
-        if user_input.strip() == "":
-            st.error("Please enter your symptoms.")
-        elif is_adversarial(user_input):
-            st.error("⚠️ Invalid or unsafe input detected.")
-        else:
-            translated_input = translate_input(user_input)
-            input_vec = vectorizer.transform([translated_input])
-            prediction = model.predict(input_vec)
+    col1, col2 = st.columns([2, 1])
+    with col2:
+        if st.button("Get Diagnosis"):
 
-            st.success(f"🩺 AI Diagnosis Suggestion: {prediction[0]}")
-            st.info("Diagnosis based on AI recognition of symptom patterns.")
+            if user_input.strip() == "":
+                st.error("Please describe your symptoms.")
+            elif is_adversarial(user_input):
+                st.error("⚠️ Invalid or suspicious input detected.")
+            else:
+                translated_input = translate_input(user_input)
+                input_vec = vectorizer.transform([translated_input])
+                prediction = model.predict(input_vec)
 
-            log_message = f"Symptoms: {translated_input}, Diagnosis: {prediction[0]}"
-            encrypted_log = encrypt_message(log_message)
-            with open("chatbot_logs.txt", "ab") as log_file:
-                log_file.write(encrypted_log + b"\n")
+                st.success(f"💡 AI Diagnosis Suggestion: **{prediction[0]}**")
+                st.info("This is a preliminary AI-generated suggestion based on recognized symptom patterns. Always consult a certified doctor for clinical confirmation.")
 
-            st.success("Your interaction has been securely logged.")
+                log_message = f"Symptoms: {translated_input}, Diagnosis: {prediction[0]}"
+                encrypted_log = encrypt_message(log_message)
+                with open("chatbot_logs.txt", "ab") as log_file:
+                    log_file.write(encrypted_log + b"\n")
+
+                st.success("📝 Your interaction has been securely logged (AES-256 encrypted).")
+
+    st.write("---")
+    st.markdown("<small style='color: grey;'>Developed by Martins T. Okwuosah, Ave Maria University, Nigeria.</small>", unsafe_allow_html=True)
 
 if __name__ == '__main__':
     run_chatbot()
